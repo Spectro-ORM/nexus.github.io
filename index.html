@@ -61,7 +61,7 @@
             HTTP pipelines<br>
             <span class="h1-spectral">the Swift way.</span>
           </h1>
-          <p class="hero-sub" data-animate data-delay="2">Compose middleware as plain functions. Route with a result-builder DSL. Parse JSON, forms, and cookies. Stream responses and serve files. Nexus brings the elegance of Elixir's Plug &mdash; built for Swift 6 from day one.</p>
+          <p class="hero-sub" data-animate data-delay="2">Compose middleware as plain functions. Route with a result-builder DSL. Parse JSON, forms, and cookies. Stream responses and serve files. Signed sessions and CSRF protection out of the box. Nexus brings the elegance of Elixir's Plug &mdash; built for Swift 6 from day one.</p>
           <div class="hero-install" data-animate data-delay="3">
             <div class="install-bar">
               <span class="install-chevron">&rsaquo;</span>
@@ -127,7 +127,7 @@ try await server.runService()
           <span>async/await</span>
           <span>Result Builders</span>
           <span>Swift 6</span>
-          <span>230 tests</span>
+          <span>278 tests</span>
         </div>
       </div>
     </section>
@@ -243,13 +243,32 @@ try await server.runService()
             <p><code>conn.sendChunked</code> streams data with a <code>ChunkWriter</code>. <code>sseEvent()</code> formats Server-Sent Events. <code>conn.sendFile</code> serves files in 64KB chunks with MIME inference.</p>
           </div>
 
+          <!-- Row 5: Sprint 8 features -->
+          <div class="fcard" data-animate>
+            <div class="fcard-tag fcard-tag-warn">Security</div>
+            <h3>Sessions</h3>
+            <p>Signed cookie-based sessions with HMAC-SHA256 via CryptoKit. <code>conn.putSession</code>, <code>conn.getSession</code>, <code>conn.clearSession</code>. No external dependencies.</p>
+          </div>
+
+          <div class="fcard" data-animate data-delay="1">
+            <div class="fcard-tag fcard-tag-warn">Security</div>
+            <h3>CSRF Protection</h3>
+            <p>Token-based CSRF prevention. Validates <code>_csrf_token</code> form param or <code>x-csrf-token</code> header on POST/PUT/PATCH/DELETE. 403 on mismatch.</p>
+          </div>
+
+          <div class="fcard" data-animate data-delay="2">
+            <div class="fcard-tag fcard-tag-green">Assets</div>
+            <h3>Static Files</h3>
+            <p>Serve an entire directory from a URL prefix with <code>staticFiles()</code>. Path traversal protection, extension filtering, MIME inference. The Plug.Static equivalent.</p>
+          </div>
+
           <!-- Built-in plugs — large card -->
           <div class="fcard fcard-lg" data-animate data-delay="1">
             <div class="fcard-split">
               <div class="fcard-info">
                 <div class="fcard-tag">Middleware</div>
                 <h3>Built-in Plugs</h3>
-                <p>Ship with production-ready middleware out of the box. Request logging with timing, UUID request IDs, CORS with preflight, HTTP Basic auth, SSL redirect — all composable.</p>
+                <p>Ship with production-ready middleware out of the box. Request logging, CORS, sessions, CSRF protection, static files, Basic auth, SSL redirect — all composable.</p>
               </div>
               <div class="fcard-code">
                 <pre><code class="language-swift">let app = pipeline([
@@ -258,10 +277,11 @@ try await server.runService()
     corsPlug(CORSConfig(
         allowedOrigin: "https://example.com"
     )),
-    basicAuth { u, p in
-        u == "admin" && p == "secret"
-    },
-    sslRedirect(),
+    staticFiles(StaticFilesConfig(
+        at: "/static", from: "./public"
+    )),
+    sessionPlug(SessionConfig(secret: key)),
+    csrfProtection(),
     router.callAsFunction,
 ])</code></pre>
               </div>
@@ -302,6 +322,9 @@ try await server.runService()
             </button>
             <button class="ex-tab" role="tab" data-tab="streaming" aria-selected="false">
               <span class="ex-tab-icon">~</span> Streaming
+            </button>
+            <button class="ex-tab" role="tab" data-tab="sessions" aria-selected="false">
+              <span class="ex-tab-icon">S</span> Sessions
             </button>
             <button class="ex-tab" role="tab" data-tab="hummingbird" aria-selected="false">
               <span class="ex-tab-icon">H</span> Server
@@ -525,6 +548,39 @@ GET("/download/:file") { conn in
               </div>
             </div>
 
+            <div class="ex-panel" data-panel="sessions">
+              <div class="ex-desc">
+                <h3>Sessions &amp; CSRF</h3>
+                <p>Signed cookie-based sessions with HMAC-SHA256 via CryptoKit. CSRF protection validates tokens on state-changing requests. No external dependencies.</p>
+              </div>
+              <div class="code-editor code-editor-sm">
+                <div class="editor-chrome"><div class="editor-tab active">Sessions.swift</div></div>
+                <div class="editor-body">
+                  <pre><code class="language-swift">let secret = Data("my-32-byte-minimum-secret!!!".utf8)
+
+let app = pipeline([
+    sessionPlug(SessionConfig(secret: secret)),
+    csrfProtection(),
+    router.callAsFunction,
+])
+
+POST("/login") { conn in
+    let user = try authenticate(conn)
+    return conn
+        .putSession(key: "user_id", value: user.id)
+        .respond(status: .ok)
+}
+
+GET("/form") { conn in
+    let (token, conn) = csrfToken(conn: conn)
+    return conn.respond(body: .string("""
+        &lt;input name="_csrf_token" value="\(token)"&gt;
+    """))
+}</code></pre>
+                </div>
+              </div>
+            </div>
+
             <div class="ex-panel" data-panel="hummingbird">
               <div class="ex-desc">
                 <h3>Hummingbird Adapter</h3>
@@ -657,7 +713,7 @@ try await server.runService()
           <table>
             <thead><tr><th>Target</th><th>Product</th><th>Role</th></tr></thead>
             <tbody>
-              <tr><td><code>Nexus</code></td><td><code>Nexus</code></td><td>Core: Connection, Plug, pipeline, JSON, cookies, streaming, built-in plugs</td></tr>
+              <tr><td><code>Nexus</code></td><td><code>Nexus</code></td><td>Core: Connection, Plug, pipeline, JSON, cookies, sessions, CSRF, static files, streaming, built-in plugs</td></tr>
               <tr><td><code>NexusRouter</code></td><td><code>NexusRouter</code></td><td>Router DSL, method helpers, scopes, forwarding</td></tr>
               <tr><td><code>NexusHummingbird</code></td><td><code>NexusHummingbird</code></td><td>Hummingbird server adapter with remote IP extraction</td></tr>
               <tr><td><code>NexusTest</code></td><td><code>NexusTest</code></td><td>TestConnection builders for testing without boilerplate</td></tr>
