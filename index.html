@@ -61,7 +61,7 @@
             HTTP pipelines<br>
             <span class="h1-spectral">the Swift way.</span>
           </h1>
-          <p class="hero-sub" data-animate data-delay="2">Compose middleware as plain functions. Route with a result-builder DSL. Parse JSON, forms, and cookies. Stream responses and serve files. Signed sessions and CSRF protection out of the box. Nexus brings the elegance of Elixir's Plug &mdash; built for Swift 6 from day one.</p>
+          <p class="hero-sub" data-animate data-delay="2">Compose middleware as plain functions. Route with a result-builder DSL. Parse JSON, forms, and cookies. Stream responses and serve files. Signed sessions and CSRF protection out of the box. WebSocket support with functional handlers. Nexus brings the elegance of Elixir's Plug &mdash; built for Swift 6 from day one.</p>
           <div class="hero-install" data-animate data-delay="3">
             <div class="install-bar">
               <span class="install-chevron">&rsaquo;</span>
@@ -127,7 +127,7 @@ try await server.runService()
           <span>async/await</span>
           <span>Result Builders</span>
           <span>Swift 6</span>
-          <span>278 tests</span>
+          <span>314 tests</span>
         </div>
       </div>
     </section>
@@ -262,6 +262,25 @@ try await server.runService()
             <p>Serve an entire directory from a URL prefix with <code>staticFiles()</code>. Path traversal protection, extension filtering, MIME inference. The Plug.Static equivalent.</p>
           </div>
 
+          <!-- Row 6: Sprint 9 features -->
+          <div class="fcard" data-animate>
+            <div class="fcard-tag">Pipeline</div>
+            <h3>Service Injection</h3>
+            <p>Inject database repos, API clients, or any <code>Sendable</code> service into the pipeline with <code>assign("db", value: repo)</code>. Static and closure-based overloads. No closure capture needed downstream.</p>
+          </div>
+
+          <div class="fcard" data-animate data-delay="1">
+            <div class="fcard-tag fcard-tag-teal">Type Safety</div>
+            <h3>Typed Assigns</h3>
+            <p>Replace <code>conn.assigns["key"] as? T</code> with <code>conn[KeyType.self]</code>. The <code>AssignKey</code> protocol gives compile-time-safe access. Built-in keys for request ID, session, and remote IP.</p>
+          </div>
+
+          <div class="fcard" data-animate data-delay="2">
+            <div class="fcard-tag fcard-tag-warn">Real-time</div>
+            <h3>WebSocket</h3>
+            <p>Bidirectional real-time communication with functional handlers. <code>WS("/ws/echo")</code> route builder, <code>WSConnection</code> with assigns, and Hummingbird adapter integration. HTTP pipeline assigns propagate into the WebSocket context.</p>
+          </div>
+
           <!-- Built-in plugs — large card -->
           <div class="fcard fcard-lg" data-animate data-delay="1">
             <div class="fcard-split">
@@ -325,6 +344,15 @@ try await server.runService()
             </button>
             <button class="ex-tab" role="tab" data-tab="sessions" aria-selected="false">
               <span class="ex-tab-icon">S</span> Sessions
+            </button>
+            <button class="ex-tab" role="tab" data-tab="injection" aria-selected="false">
+              <span class="ex-tab-icon">I</span> Injection
+            </button>
+            <button class="ex-tab" role="tab" data-tab="typed-assigns" aria-selected="false">
+              <span class="ex-tab-icon">T</span> Typed Assigns
+            </button>
+            <button class="ex-tab" role="tab" data-tab="websocket" aria-selected="false">
+              <span class="ex-tab-icon">W</span> WebSocket
             </button>
             <button class="ex-tab" role="tab" data-tab="hummingbird" aria-selected="false">
               <span class="ex-tab-icon">H</span> Server
@@ -581,6 +609,89 @@ GET("/form") { conn in
               </div>
             </div>
 
+            <div class="ex-panel" data-panel="injection">
+              <div class="ex-desc">
+                <h3>Service Injection</h3>
+                <p>Inject shared services into the pipeline with <code>assign(_:value:)</code>. Route handlers read from <code>conn.assigns</code> instead of capturing external references. Static values and per-request closures.</p>
+              </div>
+              <div class="code-editor code-editor-sm">
+                <div class="editor-chrome"><div class="editor-tab active">Injection.swift</div></div>
+                <div class="editor-body">
+                  <pre><code class="language-swift">let spectro = try SpectroClient(...)
+
+let app = pipeline([
+    requestId(),
+    assign("spectro", value: spectro),   // static
+    assign("trace") { UUID().uuidString }, // per-request
+    router.callAsFunction,
+])
+
+GET("/donuts") { conn in
+    let db = conn.assigns["spectro"] as! SpectroClient
+    let donuts = try await db.repository().all(Donut.self)
+    return try conn.json(value: donuts)
+}</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="ex-panel" data-panel="typed-assigns">
+              <div class="ex-desc">
+                <h3>Typed Assigns</h3>
+                <p>Define an <code>AssignKey</code> for compile-time-safe access. No string typos, no casts. Built-in keys for request ID, session, and remote IP with convenience accessors.</p>
+              </div>
+              <div class="code-editor code-editor-sm">
+                <div class="editor-chrome"><div class="editor-tab active">TypedAssigns.swift</div></div>
+                <div class="editor-body">
+                  <pre><code class="language-swift">// Define a typed key
+enum SpectroKey: AssignKey {
+    typealias Value = SpectroClient
+}
+
+// Write — typed
+conn = conn.assign(SpectroKey.self, value: spectro)
+
+// Read — no cast needed
+let db = conn[SpectroKey.self]  // SpectroClient?
+
+// Built-in convenience accessors
+conn.requestId  // String?  (from RequestIdKey)
+conn.session    // [String: String]?
+conn.remoteIP   // String?</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="ex-panel" data-panel="websocket">
+              <div class="ex-desc">
+                <h3>WebSocket</h3>
+                <p>Define WebSocket routes with <code>WS()</code>. The upgrade handler inspects the HTTP connection (with assigns from upstream plugs). Message handlers are plain closures.</p>
+              </div>
+              <div class="code-editor code-editor-sm">
+                <div class="editor-chrome"><div class="editor-tab active">WebSocket.swift</div></div>
+                <div class="editor-body">
+                  <pre><code class="language-swift">let echo = WS("/ws/echo", onUpgrade: { conn in
+    // Access auth, session, params from HTTP pipeline
+    WSConnection(assigns: conn.assigns, send: { _ in })
+}, onMessage: { ws, message in
+    switch message {
+    case .text(let text):
+        try await ws.send(.text("Echo: \(text)"))
+    case .binary(let data):
+        try await ws.send(.binary(data))
+    default: break
+    }
+})
+
+// Hummingbird integration
+let app = Application(
+    responder: adapter,
+    server: .nexusWebSocket(routes: [echo], plug: myPipeline)
+)</code></pre>
+                </div>
+              </div>
+            </div>
+
             <div class="ex-panel" data-panel="hummingbird">
               <div class="ex-desc">
                 <h3>Hummingbird Adapter</h3>
@@ -713,9 +824,9 @@ try await server.runService()
           <table>
             <thead><tr><th>Target</th><th>Product</th><th>Role</th></tr></thead>
             <tbody>
-              <tr><td><code>Nexus</code></td><td><code>Nexus</code></td><td>Core: Connection, Plug, pipeline, JSON, cookies, sessions, CSRF, static files, streaming, built-in plugs</td></tr>
-              <tr><td><code>NexusRouter</code></td><td><code>NexusRouter</code></td><td>Router DSL, method helpers, scopes, forwarding</td></tr>
-              <tr><td><code>NexusHummingbird</code></td><td><code>NexusHummingbird</code></td><td>Hummingbird server adapter with remote IP extraction</td></tr>
+              <tr><td><code>Nexus</code></td><td><code>Nexus</code></td><td>Core: Connection, Plug, pipeline, typed assigns, JSON, cookies, sessions, CSRF, static files, WebSocket types, streaming, built-in plugs</td></tr>
+              <tr><td><code>NexusRouter</code></td><td><code>NexusRouter</code></td><td>Router DSL, method helpers, scopes, forwarding, WebSocket route builder</td></tr>
+              <tr><td><code>NexusHummingbird</code></td><td><code>NexusHummingbird</code></td><td>Hummingbird server adapter with remote IP and WebSocket upgrade</td></tr>
               <tr><td><code>NexusTest</code></td><td><code>NexusTest</code></td><td>TestConnection builders for testing without boilerplate</td></tr>
             </tbody>
           </table>
