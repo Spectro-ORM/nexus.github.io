@@ -61,7 +61,7 @@
             HTTP pipelines<br>
             <span class="h1-spectral">the Swift way.</span>
           </h1>
-          <p class="hero-sub" data-animate data-delay="2">Compose middleware as plain functions. Route with a result-builder DSL. Parse JSON, forms, and cookies. Stream responses and serve files. Signed sessions and CSRF protection out of the box. WebSocket support with functional handlers. Nexus brings the elegance of Elixir's Plug &mdash; built for Swift 6 from day one.</p>
+          <p class="hero-sub" data-animate data-delay="2">Compose middleware as plain functions. Route with a result-builder DSL. Parse JSON, forms, and multipart uploads. AES-256-GCM encryption and signed sessions. Telemetry via swift-metrics. WebSocket support with functional handlers. 448 tests. Nexus brings the elegance of Elixir's Plug &mdash; built for Swift 6 from day one.</p>
           <div class="hero-install" data-animate data-delay="3">
             <div class="install-bar">
               <span class="install-chevron">&rsaquo;</span>
@@ -224,85 +224,95 @@ try await server.runService()
             </div>
           </div>
 
-          <!-- Row 4: Sprint 7 features -->
+          <!-- Row 4: Grouped feature categories -->
           <div class="fcard" data-animate>
             <div class="fcard-tag fcard-tag-warn">Parsing</div>
-            <h3>JSON, Forms &amp; Queries</h3>
-            <p><code>conn.decode(as:)</code> for typed JSON. <code>conn.formParams</code> for URL-encoded bodies. <code>conn.queryParams</code> for query strings. <code>conn.jsonBody()</code> for dynamic access.</p>
+            <h3>Parse Everything</h3>
+            <p>Typed JSON, forms, multipart uploads, query strings. Auto-detect with <code>bodyParser()</code>.</p>
+            <ul class="fcard-list">
+              <li><code>conn.decode(as:)</code> &middot; <code>conn.json(value:)</code></li>
+              <li><code>formParams</code> &middot; <code>queryParams</code> &middot; <code>jsonBody()</code></li>
+              <li>Multipart/form-data with file uploads</li>
+              <li><code>respondTo(html:json:)</code> content negotiation</li>
+              <li>Text, XML, and raw data response helpers</li>
+            </ul>
           </div>
 
           <div class="fcard" data-animate data-delay="1">
             <div class="fcard-tag fcard-tag-green">HTTP</div>
-            <h3>Cookies</h3>
-            <p>Read request cookies with <code>conn.reqCookies</code>. Set response cookies with <code>putRespCookie</code>. Full RFC 6265 attributes — Path, Domain, SameSite, HttpOnly, Secure.</p>
+            <h3>Full HTTP Lifecycle</h3>
+            <p>Cookies, streaming, and standards-compliant behaviour out of the box.</p>
+            <ul class="fcard-list">
+              <li>Cookies with full RFC 6265 attributes</li>
+              <li>HEAD &rarr; GET conversion (RFC 9110)</li>
+              <li>Method override for HTML forms</li>
+              <li>103 Early Hints (informational responses)</li>
+              <li>Chunked streaming, SSE, file serving</li>
+            </ul>
           </div>
 
           <div class="fcard" data-animate data-delay="2">
-            <div class="fcard-tag fcard-tag-teal">Streaming</div>
-            <h3>Chunked &amp; SSE</h3>
-            <p><code>conn.sendChunked</code> streams data with a <code>ChunkWriter</code>. <code>sseEvent()</code> formats Server-Sent Events. <code>conn.sendFile</code> serves files in 64KB chunks with MIME inference.</p>
+            <div class="fcard-tag fcard-tag-warn">Security</div>
+            <h3>Security Built In</h3>
+            <p>Signed sessions, CSRF protection, encryption, and key derivation &mdash; no external dependencies.</p>
+            <ul class="fcard-list">
+              <li>HMAC-SHA256 signed cookie sessions</li>
+              <li>CSRF token validation on state-changing requests</li>
+              <li>AES-256-GCM message encryption (HKDF keys)</li>
+              <li>PBKDF2 key derivation (RFC 2898)</li>
+              <li>Basic auth &middot; SSL redirect</li>
+            </ul>
           </div>
 
-          <!-- Row 5: Sprint 8 features -->
+          <!-- Row 5: Operations, DX, Built-in Plugs -->
           <div class="fcard" data-animate>
-            <div class="fcard-tag fcard-tag-warn">Security</div>
-            <h3>Sessions</h3>
-            <p>Signed cookie-based sessions with HMAC-SHA256 via CryptoKit. <code>conn.putSession</code>, <code>conn.getSession</code>, <code>conn.clearSession</code>. No external dependencies.</p>
+            <div class="fcard-tag fcard-tag-teal">Operations</div>
+            <h3>Observe &amp; Debug</h3>
+            <p>Metrics, error pages, proxy support, and tooling for production and development.</p>
+            <ul class="fcard-list">
+              <li>Telemetry via swift-metrics (Timer + Counter)</li>
+              <li>HTML debugger with sensitive value redaction</li>
+              <li>Reverse proxy rewriting (X-Forwarded-*)</li>
+              <li>Request IDs &middot; Request logging</li>
+            </ul>
           </div>
 
           <div class="fcard" data-animate data-delay="1">
-            <div class="fcard-tag fcard-tag-warn">Security</div>
-            <h3>CSRF Protection</h3>
-            <p>Token-based CSRF prevention. Validates <code>_csrf_token</code> form param or <code>x-csrf-token</code> header on POST/PUT/PATCH/DELETE. 403 on mismatch.</p>
-          </div>
-
-          <div class="fcard" data-animate data-delay="2">
-            <div class="fcard-tag fcard-tag-green">Assets</div>
-            <h3>Static Files</h3>
-            <p>Serve an entire directory from a URL prefix with <code>staticFiles()</code>. Path traversal protection, extension filtering, MIME inference. The Plug.Static equivalent.</p>
-          </div>
-
-          <!-- Row 6: Sprint 9 features -->
-          <div class="fcard" data-animate>
-            <div class="fcard-tag">Pipeline</div>
-            <h3>Service Injection</h3>
-            <p>Inject database repos, API clients, or any <code>Sendable</code> service into the pipeline with <code>assign("db", value: repo)</code>. Static and closure-based overloads. No closure capture needed downstream.</p>
-          </div>
-
-          <div class="fcard" data-animate data-delay="1">
-            <div class="fcard-tag fcard-tag-teal">Type Safety</div>
-            <h3>Typed Assigns</h3>
-            <p>Replace <code>conn.assigns["key"] as? T</code> with <code>conn[KeyType.self]</code>. The <code>AssignKey</code> protocol gives compile-time-safe access. Built-in keys for request ID, session, and remote IP.</p>
-          </div>
-
-          <div class="fcard" data-animate data-delay="2">
-            <div class="fcard-tag fcard-tag-warn">Real-time</div>
-            <h3>WebSocket</h3>
-            <p>Bidirectional real-time communication with functional handlers. <code>WS("/ws/echo")</code> route builder, <code>WSConnection</code> with assigns, and Hummingbird adapter integration. HTTP pipeline assigns propagate into the WebSocket context.</p>
+            <div class="fcard-tag">Developer Experience</div>
+            <h3>Type-Safe &amp; Testable</h3>
+            <p>Compile-time safety, service injection, real-time, and test helpers.</p>
+            <ul class="fcard-list">
+              <li><code>AssignKey</code> for typed assigns (no casts)</li>
+              <li>Service injection with <code>assign()</code> plug</li>
+              <li>WebSocket with functional handlers</li>
+              <li><code>TestConnection.recycle</code> for multi-step flows</li>
+              <li>Static files with path traversal protection</li>
+            </ul>
           </div>
 
           <!-- Built-in plugs — large card -->
-          <div class="fcard fcard-lg" data-animate data-delay="1">
+          <div class="fcard fcard-lg" data-animate data-delay="2">
             <div class="fcard-split">
               <div class="fcard-info">
                 <div class="fcard-tag">Middleware</div>
-                <h3>Built-in Plugs</h3>
-                <p>Ship with production-ready middleware out of the box. Request logging, CORS, sessions, CSRF protection, static files, Basic auth, SSL redirect — all composable.</p>
+                <h3>20+ Built-in Plugs</h3>
+                <p>Ship with production-ready middleware. Request logging, CORS, sessions, CSRF, encryption, telemetry, debugger, static files, proxy rewriting &mdash; all composable.</p>
               </div>
               <div class="fcard-code">
-                <pre><code class="language-swift">let app = pipeline([
+                <pre><code class="language-swift">let app = telemetry(debugger(pipeline([
+    head(),
+    rewriteOn([.forwardedProto, .forwardedFor]),
     requestId(),
     requestLogger(),
     corsPlug(CORSConfig(
         allowedOrigin: "https://example.com"
     )),
-    staticFiles(StaticFilesConfig(
-        at: "/static", from: "./public"
-    )),
+    bodyParser(),
+    methodOverride(),
     sessionPlug(SessionConfig(secret: key)),
     csrfProtection(),
     router.callAsFunction,
-])</code></pre>
+])))</code></pre>
               </div>
             </div>
           </div>
@@ -824,10 +834,10 @@ try await server.runService()
           <table>
             <thead><tr><th>Target</th><th>Product</th><th>Role</th></tr></thead>
             <tbody>
-              <tr><td><code>Nexus</code></td><td><code>Nexus</code></td><td>Core: Connection, Plug, pipeline, typed assigns, JSON, cookies, sessions, CSRF, static files, WebSocket types, streaming, built-in plugs</td></tr>
+              <tr><td><code>Nexus</code></td><td><code>Nexus</code></td><td>Core: Connection, Plug, pipeline, typed assigns, JSON, cookies, sessions, CSRF, encryption, telemetry, debugger, static files, WebSocket types, streaming, 20+ built-in plugs</td></tr>
               <tr><td><code>NexusRouter</code></td><td><code>NexusRouter</code></td><td>Router DSL, method helpers, scopes, forwarding, WebSocket route builder</td></tr>
               <tr><td><code>NexusHummingbird</code></td><td><code>NexusHummingbird</code></td><td>Hummingbird server adapter with remote IP and WebSocket upgrade</td></tr>
-              <tr><td><code>NexusTest</code></td><td><code>NexusTest</code></td><td>TestConnection builders for testing without boilerplate</td></tr>
+              <tr><td><code>NexusTest</code></td><td><code>NexusTest</code></td><td>TestConnection builders and cookie recycling for multi-step test flows</td></tr>
             </tbody>
           </table>
         </div>

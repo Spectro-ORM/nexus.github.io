@@ -388,6 +388,17 @@ img { max-width:100%; display:block; }
   margin-bottom: .4rem; letter-spacing: -.01em;
 }
 .fcard p { color: var(--text-muted); font-size: .84rem; line-height: 1.6; }
+.fcard-list { list-style: none; padding: 0; margin: .6rem 0 0; }
+.fcard-list li {
+  color: var(--text-muted); font-size: .82rem; line-height: 1.8;
+  padding-left: 1.1rem; position: relative;
+}
+.fcard-list li::before {
+  content: ''; position: absolute; left: 0; top: .6em;
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--orange); opacity: .5;
+}
+.fcard-list code { font-size: .78rem; }
 .fcard-code pre {
   background: var(--code-bg); border: 1px solid var(--border);
   border-radius: var(--r-sm); padding: .9rem 1.1rem;
